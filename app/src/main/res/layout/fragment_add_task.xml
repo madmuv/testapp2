@@ -30,6 +30,7 @@
             android:text="ADD"
             android:textStyle="bold"
             android:textColor="@color/white"
+            android:enabled="false"
             app:layout_constraintBottom_toBottomOf="@+id/edit_input"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="10dp"

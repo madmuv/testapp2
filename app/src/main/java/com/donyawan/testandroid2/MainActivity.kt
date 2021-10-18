@@ -10,8 +10,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        supportFragmentManager.beginTransaction()
-            .replace(binding.fragmentContainer.id, AddTask())
+        savedInstanceState ?: supportFragmentManager.beginTransaction()
+            .add(binding.fragmentContainer.id, AddTask())
             .commit()
     }
 }
