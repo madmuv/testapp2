@@ -2,10 +2,16 @@ package com.donyawan.testandroid2
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.donyawan.testandroid2.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val binding = ActivityMainBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
+
+        supportFragmentManager.beginTransaction()
+            .replace(binding.fragmentContainer.id, AddTask())
+            .commit()
     }
 }
