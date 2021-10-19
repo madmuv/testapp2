@@ -1,23 +1,18 @@
 package com.donyawan.testandroid2
 
-import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
-import android.widget.TextView
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.donyawan.testandroid2.databinding.ItemListBinding
 
 
-class TaskAdapter(
-    private val list: ArrayList<TaskEntity>
-) : RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
+class TaskAdapter(val clickListener: TaskClickListener) : ListAdapter<TaskEntity, TaskAdapter.IViewHolder>(TaskDiffCallBack()) {
 
-    companion object TaskDiffCallBack : DiffUtil.ItemCallback<TaskEntity>() {
+    private class TaskDiffCallBack : DiffUtil.ItemCallback<TaskEntity>() {
         override fun areItemsTheSame(oldItem: TaskEntity, newItem: TaskEntity): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.timeStamp == newItem.timeStamp
         }
 
         override fun areContentsTheSame(oldItem: TaskEntity, newItem: TaskEntity): Boolean {
@@ -25,49 +20,25 @@ class TaskAdapter(
         }
     }
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), View.OnClickListener {
-
-        lateinit var itemCheckBox: CheckBox
-        lateinit var itemClickListener: ItemClickListener
-
-        fun setItemClickLsitener(ic: ItemClickListener) {
-            this.itemClickListener = ic
-        }
-
-        override fun onClick(v: View?) {
-            this.itemClickListener.onItemClick(v, layoutPosition)
-        }
-
-        interface ItemClickListener {
-            fun onItemClick(v: View?, position: Int)
-        }
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): IViewHolder {
+        return IViewHolder(ItemListBinding.inflate(LayoutInflater.from(parent.context), parent,false))
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_list, null)
-        return ViewHolder(itemView)
+    class IViewHolder(val binding: ItemListBinding): RecyclerView.ViewHolder(binding.root) {
+        fun bind(taskEntry: TaskEntity, clickListener: TaskClickListener) {
+            binding.taskEntry = taskEntry
+            binding.clickListener = clickListener
+            binding.executePendingBindings()
+        }
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = list[position]
-        holder.itemCheckBox.text = item.title
-        holder.itemCheckBox.isChecked = item.isChecked
-
-        holder.setItemClickLsitener(object : ViewHolder.ItemClickListener{
-            override fun onItemClick(v: View?, position: Int) {
-                val myCheckBox = v as CheckBox
-                val currentItem = list[position]
-
-                if (myCheckBox.isChecked) {
-                    currentItem.isChecked = true
-                } else if (!myCheckBox.isChecked) {
-                    currentItem.isChecked = false
-                }
-            }
-
-        })
+    override fun onBindViewHolder(holder: IViewHolder, position: Int) {
+        val current = getItem(position)
+        holder.bind(current, clickListener)
     }
 
-    override fun getItemCount(): Int = list.size
+}
+
+class TaskClickListener(val clickListener: (taskEntry: TaskEntity) -> Unit) {
+    fun onClick(taskEntry: TaskEntity) = clickListener(taskEntry)
 }

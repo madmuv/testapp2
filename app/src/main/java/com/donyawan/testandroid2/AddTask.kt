@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.donyawan.testandroid2.databinding.FragmentAddTaskBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,9 @@ import kotlinx.coroutines.launch
 class AddTask : Fragment() {
 
     lateinit var binding: FragmentAddTaskBinding
-    private var itemList  = ArrayList<TaskEntity>()
+    private var itemList = mutableListOf<TaskEntity>()
+    private val taskViewModel: TaskViewModel by viewModels()
+    private lateinit var taskAdapter: TaskAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,11 +28,13 @@ class AddTask : Fragment() {
     ): View {
         binding = FragmentAddTaskBinding.inflate(layoutInflater, container, false)
 
-        binding.listItem.adapter = TaskAdapter(itemList)
 
         setEditText()
         setAddButton()
         setDeleteButton()
+        observedata()
+        setupRecyclerView()
+
 
         binding.editInput.addTextChangedListener {
 
@@ -41,10 +46,35 @@ class AddTask : Fragment() {
         return binding.root
     }
 
+    private fun setupRecyclerView() {
+        taskAdapter = TaskAdapter(TaskClickListener { taskEntry ->
+            if (taskEntry.isChecked) {
+                taskEntry.isChecked = false
+            } else if (!taskEntry.isChecked) {
+                taskEntry.isChecked = true
+            }
+
+        })
+        binding.listItem.apply {
+            adapter = taskAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+    }
+
+    private fun observedata() {
+        taskViewModel.listItem.observe(viewLifecycleOwner, {
+            taskAdapter.submitList(it)
+            taskAdapter.notifyDataSetChanged()
+            itemList = it
+
+            binding.btnDelete.isEnabled = it.isNotEmpty()
+        })
+    }
+
     private fun setDeleteButton() {
-        binding.btnDelete.isEnabled = itemList.isNotEmpty()
         binding.btnDelete.setOnClickListener {
-            deleletTask()
+            taskViewModel.deleteTask(itemList)
+            taskAdapter.notifyDataSetChanged()
         }
     }
 
@@ -52,33 +82,26 @@ class AddTask : Fragment() {
         binding.btnAdd.setOnClickListener {
 
             if (TextUtils.isEmpty(binding.editInput.text)) {
-                Toast.makeText(requireContext(), "Please, Fill your task", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please, Fill your task", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
-            addTask(
-                TaskEntity(
-                    title = binding.editInput.text.toString(),
-                    isChecked = false
+            CoroutineScope(Dispatchers.Main).launch {
+                itemList.add(
+                    TaskEntity(
+                        title = binding.editInput.text.toString(),
+                        isChecked = false,
+                        timeStamp = System.currentTimeMillis()
+                    )
                 )
-            )
+                taskViewModel.listItem.postValue(itemList)
+            }
         }
     }
 
     private fun setEditText() {
 
-    }
-
-    fun addTask(task: TaskEntity) {
-        itemList.add(task)
-    }
-
-    fun deleletTask() {
-        val filterItem = itemList.filterNot { taskEntity ->  taskEntity.isChecked}
-        CoroutineScope(Dispatchers.Main).launch {
-            itemList.clear()
-            itemList.addAll(filterItem)
-        }
     }
 
 }
