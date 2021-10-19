@@ -1,11 +1,14 @@
 package com.donyawan.testandroid2
 
+import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
@@ -28,8 +31,6 @@ class AddTask : Fragment() {
     ): View {
         binding = FragmentAddTaskBinding.inflate(layoutInflater, container, false)
 
-
-        setEditText()
         setAddButton()
         setDeleteButton()
         observedata()
@@ -54,6 +55,7 @@ class AddTask : Fragment() {
                 taskEntry.isChecked = true
             }
 
+            hideKeyboard(requireActivity())
         })
         binding.listItem.apply {
             adapter = taskAdapter
@@ -96,12 +98,19 @@ class AddTask : Fragment() {
                     )
                 )
                 taskViewModel.listItem.postValue(itemList)
+                binding.editInput.text.clear()
             }
         }
     }
 
-    private fun setEditText() {
-
+    private fun hideKeyboard(activity: Activity) {
+        val inputMethodManager = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val currentFocusedView = activity.currentFocus
+        currentFocusedView.let {
+            inputMethodManager.hideSoftInputFromWindow(
+                currentFocusedView?.windowToken, InputMethodManager.HIDE_NOT_ALWAYS
+            )
+        }
     }
 
 }
